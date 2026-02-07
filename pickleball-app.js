@@ -1,7 +1,8 @@
 const SUPABASE_URL = 'https://ssywsobtxprvhshtikts.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzeXdzb2J0eHBydmhzaHRpa3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NDQ3NjEsImV4cCI6MjA4NjAyMDc2MX0.CX_QklnwxxLW7OZBNa8ud_0N-kd0gGyMmV6uCX6xzJk';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let memos = [];
 let editingId = null;
