@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ピックルボール練習メモ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏓 ピックルボール練習メモ</h1>
+        </header>
+
+        <!-- 一覧表示画面 -->
+        <div id="listView" class="view">
+            <div class="controls">
+                <button id="newMemoBtn" class="btn btn-primary">+ 新規メモ</button>
+            </div>
+
+            <!-- 絞り込み -->
+            <div class="filter-section">
+                <h3>絞り込み</h3>
+                <div class="filter-controls">
+                    <div class="filter-group">
+                        <label>日付範囲</label>
+                        <div class="date-range">
+                            <input type="date" id="filterStartDate">
+                            <span>〜</span>
+                            <input type="date" id="filterEndDate">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>練習タイプ</label>
+                        <select id="filterType">
+                            <option value="">すべて</option>
+                            <option value="スクール">スクール</option>
+                            <option value="練習試合">練習試合</option>
+                            <option value="公式試合">公式試合</option>
+                        </select>
+                    </div>
+                    <button id="clearFilterBtn" class="btn btn-secondary">クリア</button>
+                </div>
+            </div>
+
+            <!-- メモ一覧 -->
+            <div id="memoList" class="memo-list"></div>
+        </div>
+
+        <!-- 入力/編集画面 -->
+        <div id="formView" class="view" style="display: none;">
+            <form id="memoForm">
+                <h2 id="formTitle">新規メモ</h2>
+
+                <div class="form-group">
+                    <label for="memoDate">日付 *</label>
+                    <input type="date" id="memoDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="memoType">練習タイプ *</label>
+                    <select id="memoType" required>
+                        <option value="">選択してください</option>
+                        <option value="スクール">スクール</option>
+                        <option value="練習試合">練習試合</option>
+                        <option value="公式試合">公式試合</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="summary">内容総括</label>
+                    <textarea id="summary" rows="4" placeholder="練習の内容総括を記入..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="goodPoints">良かったこと</label>
+                    <textarea id="goodPoints" rows="4" placeholder="良かったことを記入..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="improvements">改善点</label>
+                    <textarea id="improvements" rows="4" placeholder="改善点を記入..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="coachAdvice">コーチのアドバイス</label>
+                    <textarea id="coachAdvice" rows="4" placeholder="コーチのアドバイスを記入..."></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="cancelBtn" class="btn btn-secondary">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
