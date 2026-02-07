@@ -1,6 +1,6 @@
-// Supabase設定（ここにあなたの情報を入力してください）
-const SUPABASE_URL = 'https://ssywsobtxprvhshtikts.supabase.co';  // 例: https://xxxxx.supabase.co
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzeXdzb2J0eHBydmhzaHRpa3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NDQ3NjEsImV4cCI6MjA4NjAyMDc2MX0.CX_QklnwxxLW7OZBNa8ud_0N-kd0gGyMmV6uCX6xzJk';  // 例: eyJhbGci...
+// Supabase設定
+const SUPABASE_URL = 'https://ssywsobtxprvhshtikts.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzeXdzb2J0eHBydmhzaHRpa3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NDQ3NjEsImV4cCI6MjA4NjAyMDc2MX0.CX_QklnwxxLW7OZBNa8ud_0N-kd0gGyMmV6uCX6xzJk';
 
 // Supabaseクライアント初期化
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -37,7 +37,6 @@ function setupEventListeners() {
     cancelBtn.addEventListener('click', showListView);
     memoForm.addEventListener('submit', handleSubmit);
     
-    // フィルターイベント
     filterStartDate.addEventListener('change', renderMemos);
     filterEndDate.addEventListener('change', renderMemos);
     filterType.addEventListener('change', renderMemos);
@@ -54,7 +53,6 @@ async function loadMemos() {
         
         if (error) throw error;
         
-        // Supabaseのデータ形式を内部形式に変換
         memos = data.map(memo => ({
             id: memo.id,
             date: memo.date,
@@ -67,7 +65,7 @@ async function loadMemos() {
         }));
     } catch (error) {
         console.error('データ読み込みエラー:', error);
-        alert('データの読み込みに失敗しました。');
+        alert('データの読み込みに失敗しました。エラー: ' + error.message);
     }
 }
 
@@ -77,7 +75,6 @@ function showNewMemoForm() {
     formTitle.textContent = '新規メモ';
     memoForm.reset();
     
-    // 今日の日付をデフォルトに
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('memoDate').value = today;
     
@@ -106,7 +103,6 @@ async function handleSubmit(e) {
     
     try {
         if (editingId) {
-            // 編集
             const { error } = await supabase
                 .from('memos')
                 .update(memoData)
@@ -114,7 +110,6 @@ async function handleSubmit(e) {
             
             if (error) throw error;
         } else {
-            // 新規追加
             const { error } = await supabase
                 .from('memos')
                 .insert([memoData]);
@@ -127,7 +122,7 @@ async function handleSubmit(e) {
         showListView();
     } catch (error) {
         console.error('保存エラー:', error);
-        alert('保存に失敗しました。');
+        alert('保存に失敗しました。エラー: ' + error.message);
     }
 }
 
@@ -145,7 +140,6 @@ function renderMemos() {
         return;
     }
     
-    // 新しい順にソート
     const sortedMemos = [...filteredMemos].sort((a, b) => {
         return new Date(b.date) - new Date(a.date);
     });
@@ -194,7 +188,6 @@ function renderMemos() {
 function getFilteredMemos() {
     let filtered = [...memos];
     
-    // 日付範囲フィルター
     const startDate = filterStartDate.value;
     const endDate = filterEndDate.value;
     
@@ -205,7 +198,6 @@ function getFilteredMemos() {
         filtered = filtered.filter(m => m.date <= endDate);
     }
     
-    // タイプフィルター
     const type = filterType.value;
     if (type) {
         filtered = filtered.filter(m => m.type === type);
@@ -257,7 +249,7 @@ async function deleteMemo(id) {
         renderMemos();
     } catch (error) {
         console.error('削除エラー:', error);
-        alert('削除に失敗しました。');
+        alert('削除に失敗しました。エラー: ' + error.message);
     }
 }
 
@@ -265,7 +257,7 @@ async function deleteMemo(id) {
 function formatDate(dateString) {
     const date = new Date(dateString);
     const year = date.getFullYear();
-    const month = date.getMonth() + 1;
+    const month = date.getDate() + 1;
     const day = date.getDate();
     const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
     const weekday = weekdays[date.getDay()];
@@ -273,7 +265,7 @@ function formatDate(dateString) {
     return `${year}年${month}月${day}日（${weekday}）`;
 }
 
-// HTMLエスケープ（セキュリティ対策）
+// HTMLエスケープ
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
