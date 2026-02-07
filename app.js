@@ -1,3 +1,10 @@
+// Supabase設定（ここにあなたの情報を入力してください）
+const SUPABASE_URL = 'https://ssywsobtxprvhshtikts.supabase.co';  // 例: https://xxxxx.supabase.co
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNzeXdzb2J0eHBydmhzaHRpa3RzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NDQ3NjEsImV4cCI6MjA4NjAyMDc2MX0.CX_QklnwxxLW7OZBNa8ud_0N-kd0gGyMmV6uCX6xzJk';  // 例: eyJhbGci...
+
+// Supabaseクライアント初期化
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 // グローバル変数
 let memos = [];
 let editingId = null;
@@ -18,8 +25,8 @@ const filterType = document.getElementById('filterType');
 const clearFilterBtn = document.getElementById('clearFilterBtn');
 
 // 初期化
-document.addEventListener('DOMContentLoaded', () => {
-    loadMemos();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadMemos();
     renderMemos();
     setupEventListeners();
 });
@@ -37,17 +44,31 @@ function setupEventListeners() {
     clearFilterBtn.addEventListener('click', clearFilters);
 }
 
-// LocalStorageからデータ読み込み
-function loadMemos() {
-    const saved = localStorage.getItem('pickleballMemos');
-    if (saved) {
-        memos = JSON.parse(saved);
+// Supabaseからデータ読み込み
+async function loadMemos() {
+    try {
+        const { data, error } = await supabase
+            .from('memos')
+            .select('*')
+            .order('date', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Supabaseのデータ形式を内部形式に変換
+        memos = data.map(memo => ({
+            id: memo.id,
+            date: memo.date,
+            type: memo.type,
+            summary: memo.summary || '',
+            goodPoints: memo.good_points || '',
+            improvements: memo.improvements || '',
+            coachAdvice: memo.coach_advice || '',
+            createdAt: new Date(memo.created_at).getTime()
+        }));
+    } catch (error) {
+        console.error('データ読み込みエラー:', error);
+        alert('データの読み込みに失敗しました。');
     }
-}
-
-// LocalStorageにデータ保存
-function saveMemos() {
-    localStorage.setItem('pickleballMemos', JSON.stringify(memos));
 }
 
 // 新規メモフォーム表示
@@ -71,32 +92,43 @@ function showListView() {
 }
 
 // フォーム送信処理
-function handleSubmit(e) {
+async function handleSubmit(e) {
     e.preventDefault();
     
     const memoData = {
-        id: editingId || Date.now(),
         date: document.getElementById('memoDate').value,
         type: document.getElementById('memoType').value,
         summary: document.getElementById('summary').value,
-        goodPoints: document.getElementById('goodPoints').value,
+        good_points: document.getElementById('goodPoints').value,
         improvements: document.getElementById('improvements').value,
-        coachAdvice: document.getElementById('coachAdvice').value,
-        createdAt: editingId ? memos.find(m => m.id === editingId).createdAt : Date.now()
+        coach_advice: document.getElementById('coachAdvice').value
     };
     
-    if (editingId) {
-        // 編集
-        const index = memos.findIndex(m => m.id === editingId);
-        memos[index] = memoData;
-    } else {
-        // 新規追加
-        memos.push(memoData);
+    try {
+        if (editingId) {
+            // 編集
+            const { error } = await supabase
+                .from('memos')
+                .update(memoData)
+                .eq('id', editingId);
+            
+            if (error) throw error;
+        } else {
+            // 新規追加
+            const { error } = await supabase
+                .from('memos')
+                .insert([memoData]);
+            
+            if (error) throw error;
+        }
+        
+        await loadMemos();
+        renderMemos();
+        showListView();
+    } catch (error) {
+        console.error('保存エラー:', error);
+        alert('保存に失敗しました。');
     }
-    
-    saveMemos();
-    renderMemos();
-    showListView();
 }
 
 // メモ一覧表示
@@ -128,25 +160,25 @@ function renderMemos() {
                 ${memo.summary ? `
                     <div class="memo-section">
                         <div class="memo-section-title">📝 内容総括</div>
-                        <div class="memo-section-text">${memo.summary}</div>
+                        <div class="memo-section-text">${escapeHtml(memo.summary)}</div>
                     </div>
                 ` : ''}
                 ${memo.goodPoints ? `
                     <div class="memo-section">
                         <div class="memo-section-title">✅ 良かったこと</div>
-                        <div class="memo-section-text">${memo.goodPoints}</div>
+                        <div class="memo-section-text">${escapeHtml(memo.goodPoints)}</div>
                     </div>
                 ` : ''}
                 ${memo.improvements ? `
                     <div class="memo-section">
                         <div class="memo-section-title">📈 改善点</div>
-                        <div class="memo-section-text">${memo.improvements}</div>
+                        <div class="memo-section-text">${escapeHtml(memo.improvements)}</div>
                     </div>
                 ` : ''}
                 ${memo.coachAdvice ? `
                     <div class="memo-section">
                         <div class="memo-section-title">💡 コーチのアドバイス</div>
-                        <div class="memo-section-text">${memo.coachAdvice}</div>
+                        <div class="memo-section-text">${escapeHtml(memo.coachAdvice)}</div>
                     </div>
                 ` : ''}
             </div>
@@ -210,12 +242,23 @@ function editMemo(id) {
 }
 
 // メモ削除
-function deleteMemo(id) {
+async function deleteMemo(id) {
     if (!confirm('このメモを削除しますか?')) return;
     
-    memos = memos.filter(m => m.id !== id);
-    saveMemos();
-    renderMemos();
+    try {
+        const { error } = await supabase
+            .from('memos')
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        
+        await loadMemos();
+        renderMemos();
+    } catch (error) {
+        console.error('削除エラー:', error);
+        alert('削除に失敗しました。');
+    }
 }
 
 // 日付フォーマット
@@ -228,4 +271,11 @@ function formatDate(dateString) {
     const weekday = weekdays[date.getDay()];
     
     return `${year}年${month}月${day}日（${weekday}）`;
+}
+
+// HTMLエスケープ（セキュリティ対策）
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
